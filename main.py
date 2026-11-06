@@ -51,7 +51,8 @@ def download(m):
             'format': 'best[height<=480][ext=mp4]/best[height<=480]/worst[ext=mp4]',
             'outtmpl': 'video.%(ext)s',
             'quiet': True,
-            'no_warnings': True,
+            'noplaylist': True,  # এটা Playlist বন্ধ করে দিবে, শুধু ১টা ভিডিও নিবে
+            'nocheckcertificate': True,
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
