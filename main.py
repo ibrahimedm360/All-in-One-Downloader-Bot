@@ -41,8 +41,10 @@ def download(m):
             'outtmpl': 'video.%(ext)s',
             'quiet': True,
         }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            title = info.get('title', 'Video')[:50]
+
         # ভিডিও পাঠানো
         with open("video.mp4", "rb") as video:
             bot.send_video(m.chat.id, video, caption=f"✅ Done by @{bot.get_me().username}\n👉 আরো লাগলে {FORCE_CHANNEL} জয়েন করো")
