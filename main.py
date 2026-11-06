@@ -1,8 +1,12 @@
 from flask import Flask
 import threading
 import os
+import telebot
+import yt_dlp
 
+# Render কে বোঝানোর জন্য ছোট ওয়েবসাইট - এটা না থাকলে Deploy Failed হবে
 app = Flask(__name__)
+
 @app.route('/')
 def home():
     return "Bot is Running!"
@@ -12,47 +16,56 @@ def run_flask():
     app.run(host="0.0.0.0", port=port)
 
 threading.Thread(target=run_flask).start()
-import telebot
-import yt_dlp
-import os
 
-TOKEN = "8976242590:AAEshtx-vXSCvkZo95l_z4pb5axE2Hb0qtI"
+# এখানে তোমার নতুন Token বসাবে
+TOKEN = "এখানে তোমার নতুন Token বসাও"
 bot = telebot.TeleBot(TOKEN)
 
-# ইনকামের জন্য Force Join চ্যানেল
-FORCE_CHANNEL = "@TomarChannelUsername" # তোমার চ্যানেল @ সহ
+MY_CHANNEL = "@dhakacripto_downloader_bot"
 
 @bot.message_handler(commands=['start'])
 def start(m):
-    bot.send_message(m.chat.id, "👋 লিংক পাঠাও!\nYouTube / TikTok / FB / Insta সব সাপোর্ট করে।\n\nExample: https://www.tiktok.com/...")
+    bot.send_message(m.chat.id,
+        "👋 Dhaka Cripto Downloader এ স্বাগতম!\n\n"
+        "শুধু লিংক পাঠাও, আমি ভিডিও ডাউনলোড করে দিবো।\n\n"
+        "✅ YouTube\n"
+        "✅ Facebook\n"
+        "✅ TikTok\n"
+        "✅ Instagram Reels"
+    )
 
 @bot.message_handler(func=lambda m: True)
 def download(m):
     url = m.text.strip()
     if not url.startswith("http"):
-        bot.send_message(m.chat.id, "সঠিক লিংক পাঠাও ভাই!")
+        bot.send_message(m.chat.id, "❌ ভাই, সঠিক লিংক পাঠাও!")
         return
 
-    msg = bot.send_message(m.chat.id, "⏳ ডাউনলোড হচ্ছে... ১০-২০ সেকেন্ড লাগবে")
+    msg = bot.send_message(m.chat.id, "⏳ ডাউনলোড হচ্ছে... ১৫-৩০ সেকেন্ড লাগবে...")
 
     try:
+        if os.path.exists("video.mp4"):
+            os.remove("video.mp4")
+
         ydl_opts = {
-            'format': 'best[ext=mp4]',
+            'format': 'best[ext=mp4]/best',
             'outtmpl': 'video.%(ext)s',
             'quiet': True,
+            'no_warnings': True,
         }
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             title = info.get('title', 'Video')[:50]
 
-        # ভিডিও পাঠানো
         with open("video.mp4", "rb") as video:
-            bot.send_video(m.chat.id, video, caption=f"✅ Done by @{bot.get_me().username}\n👉 আরো লাগলে {FORCE_CHANNEL} জয়েন করো")
+            bot.send_video(m.chat.id, video, caption=f"✅ Done!\n🎬 {title}\n\n👉 আরো লাগলে {MY_CHANNEL} জয়েন করো")
 
         os.remove("video.mp4")
         bot.delete_message(m.chat.id, msg.message_id)
 
     except Exception as e:
-        bot.edit_message_text(f"❌ Error: লিংকটি প্রাইভেট বা সাপোর্ট করে না।\n{e}", m.chat.id, msg.message_id)
+        bot.edit_message_text(f"❌ ডাউনলোড হয়নি! লিংকটি প্রাইভেট হতে পারে।\nআরেকটা লিংক ট্রাই করো।", m.chat.id, msg.message_id)
 
+print("Bot is Running...")
 bot.infinity_polling()
