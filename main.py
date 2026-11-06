@@ -27,8 +27,7 @@ def download(m):
             'outtmpl': 'video.%(ext)s',
             'quiet': True,
         }
-        with yt_dlp.YtDL(ydl_opts) as ydl:
-            ydl.download([url])
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         
         # ভিডিও পাঠানো
         with open("video.mp4", "rb") as video:
