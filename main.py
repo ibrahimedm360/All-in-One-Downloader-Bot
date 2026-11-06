@@ -2,9 +2,9 @@ from flask import Flask
 import threading
 import os
 import telebot
-import yt_dlp
+import requests
 
-# Render কে বোঝানোর জন্য ছোট ওয়েবসাইট - এটা না থাকলে Deploy Failed হবে
+# Render কে বোঝানোর জন্য - এটা না থাকলে Deploy Failed হবে
 app = Flask(__name__)
 
 @app.route('/')
@@ -29,14 +29,18 @@ def start(m):
         "👋 Dhaka Cripto Downloader এ স্বাগতম!\n\n"
         "শুধু লিংক পাঠাও, আমি ভিডিও ডাউনলোড করে দিবো।\n\n"
         "✅ YouTube\n"
-        "✅ Facebook\n"
         "✅ TikTok\n"
-        "✅ Instagram Reels"
+        "✅ Facebook\n"
+        "✅ Instagram Reels\n\n"
+        "লিংক পাঠাও, যেমন:\nhttps://www.tiktok.com/@user/video/..."
     )
 
 @bot.message_handler(func=lambda m: True)
 def download(m):
-    url = m.text.strip()
+    # লিংকটা ছোট করে নেওয়া - ? এর পরের সব কেটে দেওয়া
+    raw_url = m.text.strip()
+    url = raw_url.split('?')[0].split('&')[0].split()[0]
+
     if not url.startswith("http"):
         bot.send_message(m.chat.id, "❌ ভাই, সঠিক লিংক পাঠাও!")
         return
@@ -47,26 +51,35 @@ def download(m):
         if os.path.exists("video.mp4"):
             os.remove("video.mp4")
 
-        ydl_opts = {
-            'format': 'best[height<=480][ext=mp4]/best[height<=480]/worst[ext=mp4]',
-            'outtmpl': 'video.%(ext)s',
-            'quiet': True,
-            'noplaylist': True,  # এটা Playlist বন্ধ করে দিবে, শুধু ১টা ভিডিও নিবে
-            'nocheckcertificate': True,
-        }
+        # Cobalt API দিয়ে ডাউনলোড - yt-dlp এর বদলে
+        r = requests.post(
+            "https://api.cobalt.tools/api/json",
+            json={"url": raw_url, "downloadMode": "auto", "videoQuality": "720", "filenameStyle": "basic"},
+            headers={"Accept": "application/json", "Content-Type": "application/json"},
+            timeout=90
+        )
+        data = r.json()
+        video_url = data.get("url")
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            title = info.get('title', 'Video')[:50]
+        if not video_url:
+            raise Exception("Cobalt fail")
+
+        # ভিডিওটা নামিয়ে পাঠানো
+        v = requests.get(video_url, timeout=90).content
+        with open("video.mp4", "wb") as f:
+            f.write(v)
 
         with open("video.mp4", "rb") as video:
-            bot.send_video(m.chat.id, video, caption=f"✅ Done!\n🎬 {title}\n\n👉 আরো লাগলে {MY_CHANNEL} জয়েন করো")
+            bot.send_video(m.chat.id, video, caption=f"✅ Done!\n\n👉 আরো ডাউনলোড করতে {MY_CHANNEL} জয়েন করো")
 
         os.remove("video.mp4")
         bot.delete_message(m.chat.id, msg.message_id)
 
     except Exception as e:
-        bot.edit_message_text(f"❌ ডাউনলোড হয়নি! লিংকটি প্রাইভেট হতে পারে।\nআরেকটা লিংক ট্রাই করো।", m.chat.id, msg.message_id)
+        try:
+            bot.edit_message_text("❌ ডাউনলোড হয়নি! লিংকটি প্রাইভেট হতে পারে।\nআরেকটা ছোট লিংক ট্রাই করো।", m.chat.id, msg.message_id)
+        except:
+            pass
 
 print("Bot is Running...")
 bot.infinity_polling()
