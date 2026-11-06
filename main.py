@@ -18,7 +18,7 @@ def run_flask():
 threading.Thread(target=run_flask).start()
 
 # এখানে তোমার নতুন Token বসাবে
-TOKEN = "8976242590:AAHTjeg7CacC9XzwP2lEsBGLF8AiBhyjxGg"
+TOKEN = "8976242590:AAFtOdTp8GnYeavVIM3b1MkfJPhqNismnQo"
 bot = telebot.TeleBot(TOKEN)
 
 MY_CHANNEL = "@dhakacripto_downloader_bot"
