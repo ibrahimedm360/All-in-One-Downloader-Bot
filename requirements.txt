@@ -1,4 +1,3 @@
-Flask
 pyTelegramBotAPI
-yt-dlp
+Flask
 requests
