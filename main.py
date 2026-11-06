@@ -54,15 +54,21 @@ def download(m):
         # Cobalt API দিয়ে ডাউনলোড - yt-dlp এর বদলে
                 # TikTok হলে TikWM দিয়ে, বাকিগুলো Cobalt দিয়ে
         if "tiktok.com" in url:
-            r = requests.get(f"https://www.tikwm.com/api/?url={raw_url}", timeout=60)
-            data = r.json()
-            video_url = data.get("data", {}).get("play")
-        else:
-            r = requests.post("https://api.cobalt.tools/api/json",
-                json={"url": raw_url, "downloadMode": "auto"},
-                headers={"Accept": "application/json", "Content-Type": "application/json"},
-                timeout=60
-            )
+    try:
+        clean_url = raw_url.split("?")[0]  # ? কেটে ফেলা
+        headers = {"User-Agent": "Mozilla/5.0"}
+        r = requests.get(f"https://api.tikwm.com/api/?url={clean_url}", headers=headers, timeout=20)
+        j = r.json()
+        d = j.get("data", {})
+        video_url = d.get("play") or d.get("wmplay") or d.get("hdplay")
+        if not video_url:
+            bot.send_message(chat_id, "❌ TikWM ভিডিও পায়নি, অন্য লিংক দাও।")
+            return
+        bot.send_video(chat_id, video_url, caption="✅ TikTok ডাউনলোড ডান!")
+        return
+    except Exception as e:
+        bot.send_message(chat_id, f"❌ Error: {e}")
+        return
             video_url = r.json().get("url")
 
         if not video_url:
