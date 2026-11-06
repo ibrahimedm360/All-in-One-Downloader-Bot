@@ -48,7 +48,7 @@ def download(m):
             os.remove("video.mp4")
 
         ydl_opts = {
-            'format': 'best[ext=mp4]/best',
+            'format': 'format': 'best[height<=480][ext=mp4]/best[height<=480]/worst[ext=mp4]',
             'outtmpl': 'video.%(ext)s',
             'quiet': True,
             'no_warnings': True,
