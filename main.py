@@ -14,7 +14,7 @@ def home():
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, "👋 Dhaka Cripto Downloader এ স্বাগতম\n\nশুধু লিংক পাঠাও, আমি ভিডিও ডাউনলোড করে দিবো।\n\n✅ YouTube\n✅ TikTok\n✅ Facebook\n✅ Instagram Reels\n\nলিংক পাঠাও, যেমন:\nhttps://www.tiktok.com/@user/video/...")
+    bot.send_message(message.chat.id, "👋 Dhaka Cripto Downloader এ স্বাগতম\n\nশুধু লিংক পাঠাও, আমি ভিডিও ডাউনলোড করে দিবো।\n\n✅ YouTube\n✅ TikTok\n✅ Facebook\n✅ Instagram Reels")
 
 @bot.message_handler(func=lambda m: True)
 def download(message):
@@ -25,7 +25,6 @@ def download(message):
         bot.send_message(chat_id, "❌ সঠিক লিংক পাঠাও।")
         return
 
-    # ? এর পরের অংশ কেটে ফেলা
     url = raw_url.split("?")[0].split("&")[0]
     clean_url = raw_url.split("?")[0]
 
@@ -35,10 +34,20 @@ def download(message):
     if "tiktok.com" in url:
         try:
             headers = {"User-Agent": "Mozilla/5.0"}
-            r = requests.get(f"https://api.tikwm.com/api/?url={clean_url}", headers=headers, timeout=25)
-            j = r.json()
-            d = j.get("data", {})
-            video_url = d.get("play") or d.get("wmplay") or d.get("hdplay")
+            video_url = None
+            apis = [
+                f"https://www.tikwm.com/api/?url={clean_url}",
+                f"https://tikwm.com/api/?url={clean_url}"
+            ]
+            for api in apis:
+                try:
+                    r = requests.get(api, headers=headers, timeout=20)
+                    d = r.json().get("data", {})
+                    video_url = d.get("play") or d.get("wmplay") or d.get("hdplay")
+                    if video_url:
+                        break
+                except:
+                    continue
             if not video_url:
                 bot.send_message(chat_id, "❌ TikWM ভিডিও পায়নি, অন্য লিংক দাও।")
                 return
